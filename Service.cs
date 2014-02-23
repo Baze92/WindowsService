@@ -11,7 +11,7 @@ using System.Configuration.Install;
 using System.Web;
 using System.ServiceModel.Web;
 using System.Threading.Tasks;
-namespace Microsoft.ServiceModel.Samples
+namespace eFacebook.Mediator.Source
 {
     
     public enum MyCustomCommands { FileAccess = 128, Another = 129 };
@@ -41,8 +41,8 @@ namespace Microsoft.ServiceModel.Samples
         }
     }
     // Define a service contract.
-    [ServiceContract(Namespace = "http://Microsoft.ServiceModel.Samples")]
-    public interface ICalculator
+    [ServiceContract(Namespace = "http://eFacebook.Mediator.Source")]
+    public interface Mediator
     {
 
         [OperationContract]
@@ -54,22 +54,18 @@ namespace Microsoft.ServiceModel.Samples
 
 
 
-    public class CalculatorService : ICalculator
+    public class FocalService : Mediator
     {
-
-        // @"C:\test\write\drive.txt";
-
-
 
         public string receiver(string stuff, string action)
         {
-            //WebOperationContext.Current.OutgoingResponse.ContentType = "text/html";
+            
             string path = @"C:\Users\Shahbaaz\efb\in\";
             path += action;
             path += ".txt";
             Away a = new Away();
             a.content = action;
-            ServiceController myService = new ServiceController("WCFWindowsServiceSample");
+            ServiceController myService = new ServiceController("eFacebookMediatorService");
             myService.ExecuteCommand((int)MyCustomCommands.FileAccess);
             File.WriteAllText(path, stuff);
             int dwStartTime = System.Environment.TickCount;
@@ -80,14 +76,11 @@ namespace Microsoft.ServiceModel.Samples
                 if (a.statusManager == true)
                 {
                     a.statusManager = false;
-                    //var result = new MemoryStream(ASCIIEncoding.UTF8.GetBytes(a.sendManager));
-                    //return (Encoding.ASCII.GetString(result.ToArray()));
-
                     return a.sendManager;
                 }
                 else
                     continue;
-                //return("oops");
+               
             }
 
         }
@@ -96,18 +89,18 @@ namespace Microsoft.ServiceModel.Samples
 
     }
 
-    public class CalculatorWindowsService : ServiceBase
+    public class FocalWindowsService : ServiceBase
     {
         public ServiceHost serviceHost = null;
-        public CalculatorWindowsService()
+        public FocalWindowsService()
         {
             // Name the Windows Service
-            ServiceName = "WCFWindowsServiceSample";
+            ServiceName = "eFacebookMediatorService";
         }
 
         public static void Main()
         {
-            ServiceBase.Run(new CalculatorWindowsService());
+            ServiceBase.Run(new FocalWindowsService());
         }
 
         // Start the Windows service.
@@ -120,7 +113,7 @@ namespace Microsoft.ServiceModel.Samples
             Away a = new Away();
             a.statusManager = false; 
 
-            serviceHost = new ServiceHost(typeof(CalculatorService));
+            serviceHost = new ServiceHost(typeof(FocalService));
             serviceHost.Open();
 
             FileSystemWatcher Watcher;
@@ -165,14 +158,7 @@ namespace Microsoft.ServiceModel.Samples
                 File.AppendAllText(path, err.ToString());
 
             }
-            /*string path = @"C:\test\read\send.txt";
-
-            if (File.Exists(path))
-            {
-                System.IO.File.WriteAllText(path, "Response from send.txt at " + DateTime.Now.ToString("HH:mm:ss tt"));
-                // System.IO.File.AppendAllText(path, "File Created from WCF at " + DateTime.Now.ToString("HH:mm:ss tt") + Environment.NewLine);
-
-            }*/
+          
         }
         protected override void OnCustomCommand(int command)
         {
@@ -195,8 +181,6 @@ namespace Microsoft.ServiceModel.Samples
             Away a = new Away();
             string path = @"C:\test\watched\";
             path += a.content;
-            //Random r = new Random();
-            // path += r.Next(1,8);
             var ts = DateTime.UtcNow - new DateTime(1970, 1, 1);
             path += ts.TotalMilliseconds;
             if (!File.Exists(path))
@@ -239,7 +223,7 @@ namespace Microsoft.ServiceModel.Samples
             process = new ServiceProcessInstaller();
             process.Account = ServiceAccount.LocalSystem;
             service = new ServiceInstaller();
-            service.ServiceName = "WCFWindowsServiceSample";
+            service.ServiceName = "eFacebookMediatorService";
             Installers.Add(process);
             Installers.Add(service);
 
@@ -250,7 +234,7 @@ namespace Microsoft.ServiceModel.Samples
         }
         void ServiceInstaller_AfterInstall(object sender, InstallEventArgs e)
         {
-            using (ServiceController sc = new ServiceController("WCFWindowsServiceSample"))
+            using (ServiceController sc = new ServiceController("eFacebookMediatorService"))
             {
                 sc.Start();
             }
